@@ -42,3 +42,8 @@ next-env.d.ts
 
 # mbtiles (42MB, not used - map runs on OSM CDN)
 *.mbtiles
+
+# local SQLite database
+*.db
+*.db-shm
+*.db-wal
