@@ -235,12 +235,12 @@ export const db = {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       decision.vehicleId,
-      decision.type,
-      JSON.stringify(decision.context),
-      decision.model,
-      decision.prompt,
-      decision.response,
-      decision.decision,
+      decision.action || decision.type || 'unknown',
+      JSON.stringify(decision.context || {}),
+      decision.modelName || decision.model || 'unknown',
+      decision.prompt || '',
+      decision.reasoning || decision.response || '',
+      decision.action || decision.decision || '',
       decision.confidence || null
     );
   },
@@ -271,16 +271,20 @@ export const db = {
     const db = getDb();
     return db.prepare(`
       UPDATE environment 
-      SET condition = ?,
+      SET weather_condition = ?,
           temperature = ?,
-          global_congestion_level = ?,
-          rush_hour = ?,
-          updated_at = strftime('%s', 'now')
+          visibility = ?,
+          simulation_time = ?,
+          congestion_level = ?,
+          is_rush_hour = ?,
+          updated_at = datetime('now')
       WHERE id = (SELECT id FROM environment ORDER BY created_at DESC LIMIT 1)
     `).run(
-      env.condition,
+      env.weather,
       env.temperature,
-      env.globalCongestion,
+      env.visibility || 10000,
+      env.simulationTime || new Date().toISOString(),
+      env.congestionLevel || 30,
       env.rushHour ? 1 : 0
     );
   },

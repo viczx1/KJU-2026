@@ -4,7 +4,7 @@ import type { Vehicle, TrafficZone, Incident } from '../types';
 // OpenRouter API configuration
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || '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';
 const OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1';
-const MODEL = 'qwen/qwen2.5-72b-instruct:free'; // Fast and free Qwen model
+const MODEL = 'qwen/qwen2.5-72b-instruct'; // Fast Qwen model (remove :free suffix)
 
 export interface DecisionContext {
   vehicle: Vehicle;
@@ -90,7 +90,7 @@ export class VehicleAgent {
 
     // Nearby zone summary
     const zoneInfo = nearbyZones.length > 0
-      ? nearbyZones.map(z => `${z.name} (Congestion: ${z.congestionLevel}%, Avg Speed: ${z.avgSpeed} km/h)`).join(', ')
+      ? nearbyZones.map(z => `${z.name || z.area || z.id} (Congestion: ${z.congestionLevel}%, Avg Speed: ${z.avgSpeed || 'N/A'} km/h)`).join(', ')
       : 'No nearby zones';
 
     // Incident summary
@@ -110,7 +110,7 @@ export class VehicleAgent {
 **Current Situation**:
 - Status: ${vehicle.status}
 - Location: ${vehicle.location.lat.toFixed(4)}°N, ${vehicle.location.lng.toFixed(4)}°E
-- Current Speed: ${vehicle.speed} km/h
+- Current Speed: ${vehicle.speed || 0} km/h
 - Fuel Level: ${Math.round(vehicle.fuel)}%
 - Cargo: ${vehicle.cargoWeight ? `${Math.round(vehicle.cargoWeight)} kg` : 'Empty'}
 
@@ -200,7 +200,7 @@ CONFIDENCE: [0.0-1.0]`;
     const action = actionMatch ? actionMatch[1].toLowerCase() : 'continue';
 
     // Extract reasoning
-    const reasoningMatch = aiResponse.match(/REASONING:\s*(.+?)(?=TARGET_SPEED:|PRIORITY:|CONFIDENCE:|$)/is);
+    const reasoningMatch = aiResponse.match(/REASONING:\s*(.+?)(?=TARGET_SPEED:|PRIORITY:|CONFIDENCE:|$)/i);
     const reasoning = reasoningMatch ? reasoningMatch[1].trim() : 'Continuing current route';
 
     // Extract target speed
@@ -265,7 +265,7 @@ CONFIDENCE: [0.0-1.0]`;
 
     // High: Nearby incident
     if (nearbyIncidents.length > 0) {
-      const highSeverity = nearbyIncidents.some(i => i.severity === 'high' || i.severity === 'critical');
+      const highSeverity = nearbyIncidents.some(i => i.severity === 'high' || (i.severity as any) === 'critical');
       if (highSeverity) {
         return {
           action: 'reroute',
@@ -304,7 +304,7 @@ CONFIDENCE: [0.0-1.0]`;
  * Create AI agent for a vehicle
  */
 export function createVehicleAgent(vehicle: Vehicle): VehicleAgent {
-  return new VehicleAgent(vehicle.id, vehicle.aiPersonality || 'balanced');
+  return new VehicleAgent(vehicle.id, (vehicle.aiPersonality || 'balanced') as 'aggressive' | 'cautious' | 'balanced' | 'efficient');
 }
 
 /**

@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "db:migrate": "tsx scripts/migrate.ts",
-    "db:setup": "tsx scripts/migrate.ts"
+    "db:setup": "tsx scripts/migrate.ts",
+    "test:system": "tsx tests/test-system.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",

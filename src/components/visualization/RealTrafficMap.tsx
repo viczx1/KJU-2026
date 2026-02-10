@@ -85,7 +85,7 @@ export function RealTrafficMap({ vehicleFilter = 'all', showIncidents = true }: 
         };
     }, [mapInstance]);
 
-    // Vehicle markers
+    // Vehicle markers with smooth animation
     useEffect(() => {
         if (!mapInstance || !L) return;
 
@@ -99,31 +99,103 @@ export function RealTrafficMap({ vehicleFilter = 'all', showIncidents = true }: 
             validIds.add(vehicle.id);
 
             if (currentMarkers.has(vehicle.id)) {
-                // Update position
+                // Update position with smooth animation
                 const marker = currentMarkers.get(vehicle.id)!;
+                const markerEl = marker.getElement();
+                
+                if (markerEl) {
+                    // Add transition for smooth movement
+                    markerEl.style.transition = 'transform 2s linear, opacity 0.3s';
+                }
+                
+                // Smoothly update position
                 marker.setLatLng([vehicle.location.lat, vehicle.location.lng]);
+
+                // Update popup content dynamically
+                const speedKmh = Math.round(vehicle.speed || 0);
+                const fuelPercent = Math.round(vehicle.fuel || 0);
+                const statusEmoji = vehicle.status === 'in-transit' ? '🚀' : 
+                                  vehicle.status === 'idle' ? '⏸️' : '⚠️';
+
+                marker.setPopupContent(
+                    `<div style="font-family: monospace; font-size: 12px;">
+                        <b>${vehicle.name}</b><br>
+                        ${statusEmoji} ${vehicle.status}<br>
+                        ⚡ ${speedKmh} km/h<br>
+                        ⛽ ${fuelPercent}% fuel
+                    </div>`
+                );
             } else {
-                // Create new marker
-                const color = vehicle.type === 'truck' ? '#f97316' : '#22d3ee';
+                // Create new marker with enhanced visuals
+                const color = vehicle.type === 'truck' ? '#f97316' : 
+                             vehicle.type === 'car' ? '#22d3ee' : '#a855f7';
+                
+                const isMoving = vehicle.status === 'in-transit';
+                const pulseAnimation = isMoving ? 'animation: pulse 2s infinite;' : '';
+                
                 const icon = L.divIcon({
-                    html: `<div style="width: 20px; height: 20px; background: ${color}; border: 2px solid white; border-radius: 50%; box-shadow: 0 0 10px ${color};"></div>`,
-                    className: '',
-                    iconSize: [20, 20]
+                    html: `
+                        <style>
+                            @keyframes pulse {
+                                0%, 100% { box-shadow: 0 0 10px ${color}, 0 0 20px ${color}; }
+                                50% { box-shadow: 0 0 20px ${color}, 0 0 30px ${color}; }
+                            }
+                        </style>
+                        <div style="
+                            width: 24px; 
+                            height: 24px; 
+                            background: ${color}; 
+                            border: 3px solid white; 
+                            border-radius: 50%; 
+                            box-shadow: 0 0 10px ${color};
+                            ${pulseAnimation}
+                            transition: all 0.3s;
+                        "></div>
+                    `,
+                    className: 'vehicle-marker',
+                    iconSize: [24, 24]
                 });
 
+                const speedKmh = Math.round(vehicle.speed || 0);
+                const fuelPercent = Math.round(vehicle.fuel || 0);
+                const statusEmoji = vehicle.status === 'in-transit' ? '🚀' : 
+                                  vehicle.status === 'idle' ? '⏸️' : '⚠️';
+
                 const marker = L.marker([vehicle.location.lat, vehicle.location.lng], { icon })
-                    .bindPopup(`<b>${vehicle.name}</b><br>${vehicle.status} • Fuel: ${Math.round(vehicle.fuel)}%`)
+                    .bindPopup(
+                        `<div style="font-family: monospace; font-size: 12px;">
+                            <b>${vehicle.name}</b><br>
+                            ${statusEmoji} ${vehicle.status}<br>
+                            ⚡ ${speedKmh} km/h<br>
+                            ⛽ ${fuelPercent}% fuel
+                        </div>`
+                    )
                     .addTo(mapInstance);
+
+                // Add smooth transition to new markers
+                const markerEl = marker.getElement();
+                if (markerEl) {
+                    markerEl.style.transition = 'transform 2s linear, opacity 0.3s';
+                }
 
                 currentMarkers.set(vehicle.id, marker);
             }
         });
 
-        // Remove old markers
+        // Remove old markers with fade-out animation
         currentMarkers.forEach((marker, id) => {
             if (!validIds.has(id)) {
-                marker.remove();
-                currentMarkers.delete(id);
+                const markerEl = marker.getElement();
+                if (markerEl) {
+                    markerEl.style.opacity = '0';
+                    setTimeout(() => {
+                        marker.remove();
+                        currentMarkers.delete(id);
+                    }, 300);
+                } else {
+                    marker.remove();
+                    currentMarkers.delete(id);
+                }
             }
         });
 
