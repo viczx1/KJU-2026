@@ -186,13 +186,14 @@ class VehicleSimulationEngine {
         
         // Get traffic conditions first to determine if we need alternatives
         const incidents = await fetchTrafficIncidents();
-        const nearbyIncidents = incidents.filter((inc: any) => {
+        // Only consider incidents within 1km, and skip if too many (likely data issue)
+        const nearbyIncidents = incidents.length < 20 ? incidents.filter((inc: any) => {
           const dist = this.getDistance(
             vehicle.location_lat, vehicle.location_lng,
             inc.location.lat, inc.location.lng
           );
-          return dist < 0.05; // Within ~5km radius
-        });
+          return dist < 0.01; // Within ~1km radius
+        }) : [];
         
         // Get congested areas from real traffic data (CSV-based)
         const trafficHotspots = (typeof globalThis !== 'undefined' && (globalThis as any).__trafficHotspots) || [];

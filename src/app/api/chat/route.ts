@@ -54,7 +54,7 @@ Guidelines:
                 'X-Title': 'TrafficMaxxers'
             },
             body: JSON.stringify({
-                model: 'meta-llama/llama-3.2-3b-instruct:free',
+                model: 'z-ai/glm-4.5-air:free',
                 messages: [
                     { role: 'system', content: systemContext },
                     ...recentMessages

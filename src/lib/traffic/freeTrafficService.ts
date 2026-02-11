@@ -57,7 +57,7 @@ const TRAFFIC_HOTSPOTS = [
   { name: 'MG Road', lat: 12.9716, lng: 77.5946, incidentProbability: 0.04 }
 ];
 
-// Active incidents storage (persists during runtime)
+// Active incidents storage - starts empty for clean demo
 let activeIncidents: TrafficIncident[] = [];
 let incidentIdCounter = 1;
 
@@ -97,12 +97,12 @@ export async function fetchTrafficIncidents(
   if (weatherCondition === 'fog') spawnProbability *= 2.5;
   if (weatherCondition === 'storm') spawnProbability *= 4.0;
   
-  // Spawn new incidents
-  if (Math.random() < spawnProbability) {
-    const newIncident = generateRealisticIncident(weatherCondition, isRushHour);
-    activeIncidents.push(newIncident);
-    console.log(`🚨 New incident: ${newIncident.type} at ${newIncident.affectedRoads[0]} (${newIncident.severity})`);
-  }
+  // Spawn new incidents - DISABLED for hackathon demo to prevent spam
+  // if (Math.random() < spawnProbability) {
+  //   const newIncident = generateRealisticIncident(weatherCondition, isRushHour);
+  //   activeIncidents.push(newIncident);
+  //   console.log(`🚨 New incident: ${newIncident.type} at ${newIncident.affectedRoads[0]} (${newIncident.severity})`);
+  // }
   
   return [...activeIncidents];
 }
